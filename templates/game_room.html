@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Room {{ code }} - Truth or Dare</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #1f1f1f; color: white; text-align: center; padding: 40px; }
+    h1, h2, h3 { color: #00e676; }
+    .buttons { margin: 20px; display: flex; justify-content: center; gap: 15px; }
+    button {
+      padding: 12px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .truth { background-color: #ff4081; color: white; }
+    .dare { background-color: #7c4dff; color: white; }
+    .random { background-color: #00bcd4; color: white; }
+    #prompt { margin-top: 30px; font-size: 20px; color: #ffe082; white-space: pre-wrap; }
+  </style>
+  <script>
+    function spin(choice) {
+      fetch(`/spin/{{ code }}/${choice}`, { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+          if (data.prompt) {
+            document.getElementById('prompt').innerText = data.prompt;
+          } else if (data.error) {
+            alert(data.error);
+          }
+        });
+    }
+  </script>
+</head>
+<body>
+  <h1>Room Code: {{ code }}</h1>
+  <h2>Hello, {{ player }}!</h2>
+  <h3>Current turn: {{ current }}</h3>
+
+  <div class="buttons">
+    <button class="truth" onclick="spin('truth')">Truth</button>
+    <button class="dare" onclick="spin('dare')">Dare</button>
+    <button class="random" onclick="spin('random')">Random</button>
+  </div>
+
+  <div id="prompt"></div>
+</body>
+</html>
