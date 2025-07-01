@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Truth or Dare - Setup</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #1f1f1f; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
+    h1 { color: #ff4081; }
+    form { display: flex; flex-direction: column; gap: 10px; align-items: center; }
+    input[type=text] { padding: 8px; width: 250px; border: none; border-radius: 5px; }
+    button { background: #00bcd4; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+    .player-list { margin-top: 20px; }
+  </style>
+  <script>
+    function addPlayerField() {
+      const list = document.getElementById('player-list');
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.name = 'players';
+      input.placeholder = 'Enter player name';
+      list.appendChild(input);
+    }
+  </script>
+</head>
+<body>
+  <h1>Truth or Dare</h1>
+  <form method="POST">
+    <div id="player-list">
+      <input type="text" name="players" placeholder="Enter player name" required>
+    </div>
+    <button type="button" onclick="addPlayerField()">+ Add Player</button>
+    <button type="submit">Start Game</button>
+  </form>
+</body>
+</html>

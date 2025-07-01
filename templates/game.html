@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Truth or Dare - Game</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #1f1f1f; color: white; text-align: center; padding: 50px; }
+    h2 { color: #7c4dff; }
+    .buttons { margin: 20px auto; display: flex; justify-content: center; gap: 20px; }
+    button {
+      padding: 12px 24px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .truth { background-color: #ff4081; color: white; }
+    .dare { background-color: #7c4dff; color: white; }
+    .random { background-color: #00bcd4; color: white; }
+    #prompt { margin-top: 30px; font-size: 18px; color: #ffeb3b; white-space: pre-wrap; }
+  </style>
+  <script>
+    function spin(choice) {
+      fetch(`/spin/${choice}`)
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById('prompt').innerText = data.prompt;
+        });
+    }
+  </script>
+</head>
+<body>
+  <h1>It's <span style="color:#00e676">{{ player }}</span>'s Turn!</h1>
+  <h2>Choose your fate:</h2>
+  <div class="buttons">
+    <button class="truth" onclick="spin('truth')">Truth</button>
+    <button class="dare" onclick="spin('dare')">Dare</button>
+    <button class="random" onclick="spin('random')">Random</button>
+  </div>
+  <div id="prompt"></div>
+</body>
+</html>
