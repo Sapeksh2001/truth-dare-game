@@ -21,28 +21,16 @@
   </style>
   <script>
     function spin(choice) {
-      if (!yourTurn) {
-        alert("Wait for your turn!");
-        return;
-      }
-    
-      // Disable buttons immediately
-      document.querySelectorAll('button').forEach(btn => btn.disabled = true);
-    
       fetch(`/spin/{{ code }}/${choice}`, { method: 'POST' })
         .then(res => res.json())
         .then(data => {
           if (data.prompt) {
             document.getElementById('prompt').innerText = data.prompt;
-            yourTurn = false;
           } else if (data.error) {
             alert(data.error);
-            // Re-enable if error occurred
-            document.querySelectorAll('button').forEach(btn => btn.disabled = false);
           }
         });
     }
-
   </script>
 </head>
 <body>
