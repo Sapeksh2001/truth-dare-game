@@ -1,43 +1,92 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>Truth or Dare - Game</title>
+  <title>Room {{ code }} - Truth or Dare</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #1f1f1f; color: white; text-align: center; padding: 50px; }
-    h2 { color: #7c4dff; }
-    .buttons { margin: 20px auto; display: flex; justify-content: center; gap: 20px; }
+    body { font-family: Arial, sans-serif; background: #1f1f1f; color: white; text-align: center; padding: 40px; }
+    h1, h2, h3 { color: #00e676; }
+    .buttons { margin: 20px; display: flex; justify-content: center; gap: 15px; }
     button {
-      padding: 12px 24px;
+      padding: 12px 20px;
       font-size: 16px;
       border: none;
-      border-radius: 8px;
+      border-radius: 6px;
       cursor: pointer;
       font-weight: bold;
     }
     .truth { background-color: #ff4081; color: white; }
     .dare { background-color: #7c4dff; color: white; }
     .random { background-color: #00bcd4; color: white; }
-    #prompt { margin-top: 30px; font-size: 18px; color: #ffeb3b; white-space: pre-wrap; }
+    #prompt { margin-top: 30px; font-size: 20px; color: #ffe082; white-space: pre-wrap; }
+    #status { margin-top: 10px; color: #ccc; }
+    #players { margin-top: 20px; font-size: 14px; color: #aaa; }
   </style>
   <script>
+    let yourTurn = false;
+
     function spin(choice) {
-      fetch(`/spin/${choice}`)
+      if (!yourTurn) {
+        alert("Wait for your turn!");
+        return;
+      }
+
+      fetch(`/spin/{{ code }}/${choice}`, { method: 'POST' })
         .then(res => res.json())
         .then(data => {
-          document.getElementById('prompt').innerText = data.prompt;
+          if (data.prompt) {
+            document.getElementById('prompt').innerText = data.prompt;
+            yourTurn = false;
+          } else if (data.error) {
+            alert(data.error);
+          }
         });
     }
+
+    function checkStatus() {
+      fetch(`/game-status/{{ code }}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.error) return;
+
+          yourTurn = data.your_turn;
+
+          const status = document.getElementById('status');
+          if (data.already_played) {
+            status.innerText = "You've already played this round. Waiting for others...";
+          } else if (yourTurn) {
+            status.innerText = "Your turn! Pick Truth or Dare.";
+          }
+
+          const playerList = document.getElementById('players');
+          let html = '<strong>Players this round:</strong><br>';
+          for (let p of data.players) {
+            if (data.played.includes(p)) {
+              html += `✅ ${p}<br>`;
+            } else {
+              html += `⏳ ${p}<br>`;
+            }
+          }
+          playerList.innerHTML = html;
+        });
+    }
+
+    setInterval(checkStatus, 2000); // update every 2 seconds
+    window.onload = checkStatus;
   </script>
 </head>
 <body>
-  <h1>It's <span style="color:#00e676">{{ player }}</span>'s Turn!</h1>
-  <h2>Choose your fate:</h2>
+  <h1>Room Code: {{ code }}</h1>
+  <h2>Hello, {{ player }}!</h2>
+
+  <div id="status">Loading status...</div>
+
   <div class="buttons">
     <button class="truth" onclick="spin('truth')">Truth</button>
     <button class="dare" onclick="spin('dare')">Dare</button>
     <button class="random" onclick="spin('random')">Random</button>
   </div>
+
   <div id="prompt"></div>
+  <div id="players"></div>
 </body>
 </html>
