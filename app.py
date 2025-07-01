@@ -64,8 +64,23 @@ def room(code):
     name = session.get('name')
     if not name or name not in rooms[code]['players']:
         return redirect(url_for('home'))
-    current_turn = rooms[code]['players'][rooms[code]['turn'] % len(rooms[code]['players'])]
-    return render_template('game_room.html', code=code, player=name, current=current_turn)
+    return render_template('game_room.html', code=code, player=name)
+
+@app.route('/game-status/<code>')
+def game_status(code):
+    name = session.get('name')
+    if not name or code not in rooms or name not in rooms[code]['players']:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    room = rooms[code]
+    all_played = len(room['played_this_round']) >= len(room['players'])
+    return jsonify({
+        "your_turn": name not in room['played_this_round'],
+        "already_played": name in room['played_this_round'],
+        "all_played": all_played,
+        "players": room['players'],
+        "played": list(room['played_this_round'])
+    })
 
 @app.route('/spin/<code>/<choice>', methods=['POST'])
 def spin(code, choice):
@@ -74,11 +89,9 @@ def spin(code, choice):
         return jsonify({"error": "Unauthorized"}), 403
 
     room = rooms[code]
-    if name != room['players'][room['turn'] % len(room['players'])]:
-        return jsonify({"error": "Not your turn"}), 403
 
     if name in room['played_this_round']:
-        return jsonify({"error": "Already played this round"}), 403
+        return jsonify({"error": "You have already played this round."}), 403
 
     if choice == 'truth':
         prompt = random.choice(truths)
@@ -89,10 +102,9 @@ def spin(code, choice):
 
     room['played_this_round'].add(name)
 
-    # If all have played, reset and move to next round
+    # If all have played, reset for next round
     if len(room['played_this_round']) >= len(room['players']):
         room['played_this_round'].clear()
-        room['turn'] = (room['turn'] + 1) % len(room['players'])
 
     return jsonify({"prompt": prompt})
 
