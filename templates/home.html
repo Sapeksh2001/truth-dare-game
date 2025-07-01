@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Truth & Dare - Multiplayer Lobby</title>
+  <style>
+    body { font-family: Arial; text-align: center; padding: 50px; background: #111; color: #fff; }
+    input, button { padding: 10px; margin: 10px; font-size: 16px; border-radius: 8px; border: none; }
+    .form-box { margin: 30px auto; background: #222; padding: 20px; border-radius: 12px; width: 300px; }
+    button { cursor: pointer; background: #00bcd4; color: #fff; transition: 0.3s; }
+    button:hover { background: #0097a7; }
+  </style>
+</head>
+<body>
+  <h1>Truth or Dare</h1>
+
+  <div class="form-box">
+    <h2>Create Room</h2>
+    <form method="POST" action="/create-room">
+      <input type="text" name="name" placeholder="Your name" required><br>
+      <button type="submit">Create Room</button>
+    </form>
+  </div>
+
+  <div class="form-box">
+    <h2>Join Room</h2>
+    <form method="POST" action="/join-room">
+      <input type="text" name="name" placeholder="Your name" required><br>
+      <input type="text" name="room_code" placeholder="Room Code (e.g. 1234)" required><br>
+      <button type="submit">Join Room</button>
+    </form>
+  </div>
+</body>
+</html>
