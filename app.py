@@ -1,17 +1,12 @@
 # app.py
-from flask import Flask, render_template, request, redirect, session, url_for, jsonify
+from flask import Flask, render_template, request, redirect, session, url_for
 import random
 import os
-import string
 
 app = Flask(__name__)
-app.secret_key = 'your-secret-key'
-
-# In-memory room storage
-rooms = {}
+app.secret_key = 'your-secret-key'  # Replace with secure key in production
 
 # Load prompts
-
 def load_prompts(file):
     with open(file, 'r', encoding='utf-8') as f:
         return [line.strip() for line in f if line.strip()]
@@ -19,94 +14,34 @@ def load_prompts(file):
 truths = load_prompts('truth.txt')
 dares = load_prompts('dare.txt')
 
-# Generate 4-digit room code
-def generate_room_code():
-    while True:
-        code = ''.join(random.choices(string.digits, k=4))
-        if code not in rooms:
-            return code
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    if request.method == 'POST':
+        players = request.form.getlist('players')
+        session['players'] = players
+        session['turn'] = 0
+        return redirect(url_for('game'))
+    return render_template('index.html')
 
-@app.route('/', methods=['GET'])
-def home():
-    return render_template('home.html')
+@app.route('/game')
+def game():
+    players = session.get('players', [])
+    if not players:
+        return redirect(url_for('index'))
+    turn = session.get('turn', 0)
+    current = players[turn % len(players)]
+    return render_template('game.html', player=current)
 
-@app.route('/create-room', methods=['POST'])
-def create_room():
-    name = request.form.get('name')
-    code = generate_room_code()
-    rooms[code] = {
-        'host': name,
-        'players': [name],
-        'turn': 0,
-        'played_this_round': set()
-    }
-    session['room_code'] = code
-    session['name'] = name
-    return redirect(url_for('room', code=code))
-
-@app.route('/join-room', methods=['POST'])
-def join_room():
-    name = request.form.get('name')
-    code = request.form.get('room_code')
-    if code not in rooms:
-        return f"Room {code} not found.", 404
-    if name in rooms[code]['players']:
-        return f"Name '{name}' already taken in room {code}.", 400
-    rooms[code]['players'].append(name)
-    session['room_code'] = code
-    session['name'] = name
-    return redirect(url_for('room', code=code))
-
-@app.route('/room/<code>')
-def room(code):
-    if code not in rooms:
-        return f"Room {code} does not exist.", 404
-    name = session.get('name')
-    if not name or name not in rooms[code]['players']:
-        return redirect(url_for('home'))
-    return render_template('game_room.html', code=code, player=name)
-
-@app.route('/game-status/<code>')
-def game_status(code):
-    name = session.get('name')
-    if not name or code not in rooms or name not in rooms[code]['players']:
-        return jsonify({"error": "Unauthorized"}), 403
-
-    room = rooms[code]
-    all_played = len(room['played_this_round']) >= len(room['players'])
-    return jsonify({
-        "your_turn": name not in room['played_this_round'],
-        "already_played": name in room['played_this_round'],
-        "all_played": all_played,
-        "players": room['players'],
-        "played": list(room['played_this_round'])
-    })
-
-@app.route('/spin/<code>/<choice>', methods=['POST'])
-def spin(code, choice):
-    name = session.get('name')
-    if not name or code not in rooms or name not in rooms[code]['players']:
-        return jsonify({"error": "Unauthorized"}), 403
-
-    room = rooms[code]
-
-    if name in room['played_this_round']:
-        return jsonify({"error": "You have already played this round."}), 403
-
+@app.route('/spin/<choice>')
+def spin(choice):
     if choice == 'truth':
         prompt = random.choice(truths)
     elif choice == 'dare':
         prompt = random.choice(dares)
     else:
         prompt = random.choice(truths + dares)
-
-    room['played_this_round'].add(name)
-
-    # If all have played, reset for next round
-    if len(room['played_this_round']) >= len(room['players']):
-        room['played_this_round'].clear()
-
-    return jsonify({"prompt": prompt})
+    session['turn'] += 1
+    return {'prompt': prompt}
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
