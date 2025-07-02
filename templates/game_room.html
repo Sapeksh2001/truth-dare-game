@@ -3,112 +3,47 @@
 <head>
   <title>Room {{ code }} - Truth or Dare</title>
   <style>
-    body { background: #1f1f1f; color: white; font-family: Arial, sans-serif; margin: 0; padding: 0; }
-    h1, h2 { text-align: center; color: #00e676; margin: 20px; }
-    .container { display: flex; flex-direction: column; align-items: center; gap: 20px; padding: 20px; }
-    .buttons { margin: 10px; display: flex; gap: 15px; }
-    button { padding: 10px 20px; font-size: 16px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; }
+    body { font-family: Arial, sans-serif; background: #1f1f1f; color: white; text-align: center; padding: 40px; }
+    h1, h2, h3 { color: #00e676; }
+    .buttons { margin: 20px; display: flex; justify-content: center; gap: 15px; }
+    button {
+      padding: 12px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
     .truth { background-color: #ff4081; color: white; }
     .dare { background-color: #7c4dff; color: white; }
     .random { background-color: #00bcd4; color: white; }
-    .grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; }
-    .player-card {
-      background: #2a2a2a; padding: 15px; border-radius: 10px; width: 200px;
-      box-shadow: 0 0 5px #000; text-align: center;
-    }
-    .choice { color: #ffc107; margin-top: 5px; }
-    .prompt { font-size: 14px; margin-top: 8px; color: #ffeb3b; white-space: pre-wrap; }
+    #prompt { margin-top: 30px; font-size: 20px; color: #ffe082; white-space: pre-wrap; }
   </style>
   <script>
-    let yourTurn = false;
-
     function spin(choice) {
-      if (!yourTurn) {
-        alert("Wait for your turn!");
-        return;
-      }
-
-      const btns = document.querySelectorAll('.truth, .dare, .random');
-      btns.forEach(b => b.disabled = true);
-
       fetch(`/spin/{{ code }}/${choice}`, { method: 'POST' })
         .then(res => res.json())
         .then(data => {
           if (data.prompt) {
             document.getElementById('prompt').innerText = data.prompt;
-            yourTurn = false;
           } else if (data.error) {
             alert(data.error);
-            btns.forEach(b => b.disabled = false);
           }
-        }).catch(() => {
-          alert("Something went wrong.");
-          btns.forEach(b => b.disabled = false);
         });
     }
-
-    function updateStatus() {
-      fetch(`/game-status/{{ code }}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.error) return;
-
-          yourTurn = data.your_turn;
-          const status = document.getElementById('status');
-          status.innerText = yourTurn ? "Your turn! Choose Truth or Dare." :
-            data.already_played ? "You've already played. Waiting for others..." :
-            "Waiting for your turn...";
-
-          const grid = document.getElementById('players');
-          grid.innerHTML = "";
-
-          const me = "{{ player }}";
-          const all = data.players;
-          const hist = data.history;
-
-          const layout = {
-            2: [1],
-            3: [3],
-            4: [4],
-            5: [4],
-            6: [3, 3],
-            7: [3, 4],
-            8: [4, 4]
-          }[all.length] || [all.length];
-
-          // host on top
-          let you = document.createElement("div");
-          you.className = "player-card";
-          you.innerHTML = `<strong>${me} (You)</strong><div class="choice">${hist[me]?.choice || ''}</div><div class="prompt">${hist[me]?.prompt || ''}</div>`;
-          grid.appendChild(you);
-
-          // arrange others
-          all.forEach(p => {
-            if (p === me) return;
-            let div = document.createElement("div");
-            div.className = "player-card";
-            div.innerHTML = `<strong>${p}</strong><div class="choice">${hist[p]?.choice || ''}</div><div class="prompt">${hist[p]?.prompt || ''}</div>`;
-            grid.appendChild(div);
-          });
-        });
-    }
-
-    setInterval(updateStatus, 2000);
-    window.onload = updateStatus;
   </script>
 </head>
 <body>
-  <div class="container">
-    <h1>Room {{ code }}</h1>
-    <h2>Hello, {{ player }}!</h2>
-    <div id="status">Loading...</div>
-    <div class="buttons">
-      <button class="truth" onclick="spin('truth')">Truth</button>
-      <button class="dare" onclick="spin('dare')">Dare</button>
-      <button class="random" onclick="spin('random')">Random</button>
-    </div>
-    <div id="prompt" style="margin-top: 20px; font-size: 18px;"></div>
-    <div id="players" class="grid"></div>
+  <h1>Room Code: {{ code }}</h1>
+  <h2>Hello, {{ player }}!</h2>
+  <h3>Current turn: {{ current }}</h3>
+
+  <div class="buttons">
+    <button class="truth" onclick="spin('truth')">Truth</button>
+    <button class="dare" onclick="spin('dare')">Dare</button>
+    <button class="random" onclick="spin('random')">Random</button>
   </div>
+
+  <div id="prompt"></div>
 </body>
 </html>
